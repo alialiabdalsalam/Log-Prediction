@@ -1,0 +1,81 @@
+import lasio
+import pandas as pd
+import numpy as np
+from sklearn.linear_model import LinearRegression
+import seaborn as sns
+from sklearn.pipeline import Pipeline
+from sklearn.preprocessing import StandardScaler, PolynomialFeatures
+from scipy.stats import pearsonr
+
+las = lasio.read("ColvilleUnit1.LAS")
+
+well = las.df()
+
+df =well.dropna(how="any")
+
+# Convert dataframe into series
+list1 = df['GR']
+list2 = df['ILD']
+ 
+# Apply the pearsonr()
+corr, _ = pearsonr(list1, list2)
+print('Pearsons correlation: %.3f' % corr)
+ # Negative correlation	When one variable changes, the other variable changes in the opposite direction.
+
+sns.regplot(x="ILD", y="GR", data=df)
+
+lm = LinearRegression()
+x = df[['ILD']]
+y = df['GR']
+lm.fit(x, y)
+
+yhat=lm.predict(x)
+lm.score(x,y)
+
+
+lm.intercept_
+
+lm.coef_
+
+z= df[ ["RHOB","SP","ILM",'ILD']]
+y = df['GR']
+
+lm.fit(z, y)
+
+yhat=lm.predict(z)
+lm.score(z,y)
+
+#USING PIPILINE 
+#Pipeline
+
+#Principal Components Regression is the combination of two steps:
+# Principal Component Analysis (PCA), which is the decomposition of the spectra into a new set of variables chosen as to maximise the variance of the data.
+# Linear Regression on the selected number of principal componen.
+
+Input=[('scale',StandardScaler()), ('polynomial', PolynomialFeatures(include_bias=False)), ('model',LinearRegression())]
+
+pipe=Pipeline(Input)
+pipe
+
+z= df[ ["LL8", "RHOB","SP","ILM",'ILD']]
+y = df['GR']
+
+pipe.fit(z,y)
+
+pipe.score(z,y)
+
+y_data = df['GR']
+x_data=df.drop('GR',axis=1)
+from sklearn.model_selection import train_test_split
+from sklearn.linear_model import Ridge
+
+x_train, x_test, y_train, y_test = train_test_split(x_data, y_data, test_size=0.10, random_state=0)
+
+
+pr=PolynomialFeatures(degree=2)
+x_train_pr=pr.fit_transform(x_train[ ["LL8", "RHOB","SP","ILM",'ILD']])
+x_test_pr=pr.fit_transform(x_test[ ["LL8", "RHOB","SP","ILM",'ILD']])
+
+RigeModel=Ridge(alpha=0.1)
+RigeModel.fit(x_train_pr, y_train)
+RigeModel.score(x_test_pr, y_test)
